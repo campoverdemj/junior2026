@@ -74,40 +74,33 @@ archivo = st.file_uploader("Cargar archivo CSV", type="csv")
 
 if archivo:
     df = pd.read_csv(archivo)
-    
-    # Intento de renombrar columnas si vienen del formato estándar de Uber
     df = df.rename(columns=MAPEO_COLUMNAS)
+    st.success("Archivo cargado con éxito.")
     
-    st.success("Archivo cargado. Selecciona un viaje abajo:")
-    
-    # Selector de viaje estilizado
+    # Selector de viaje
     seleccion = st.selectbox(
         "¿Qué viaje quieres reportar?",
         options=df.index,
-        format_func=lambda x: f"Viaje {df.iloc[x].get('fecha_texto', x)} - {df.iloc[x].get('total', '0.00')} US$"
+        format_func=lambda x: f"Viaje {df.iloc[x].get('fecha_texto', 'Sin Fecha')} - {df.iloc[x].get('total', '0.00')} US$"
     )
     
+    # AQUÍ SE DEFINE LA VARIABLE 'viaje'
     viaje = df.loc[seleccion]
     
-    # Vista previa en la App
+    # Vista previa (Métricas)
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total", f"{viaje.get('total')} US$") [cite: 4, 5]
+        # Usamos .get() para evitar NameError si la columna falta
+        st.metric("Total", f"{viaje.get('total', '0.00')} US$") [cite: 4, 5]
     with col2:
         st.metric("Distancia", viaje.get('distancia', 'N/A')) [cite: 18]
 
     # Botón de Generación
     if st.button("Generar PDF Individual"):
-        try:
-            pdf_data = generar_pdf(viaje)
-            st.download_button(
-                label="📥 Descargar Reporte PDF",
-                data=pdf_data,
-                file_name=f"Uber_Reporte_{seleccion}.pdf",
-                mime="application/pdf"
-            )
-        except Exception as e:
-            st.error(f"Hubo un problema al generar el PDF: {e}")
-
-else:
-    st.info("Esperando archivo... Asegúrate de que el CSV tenga las columnas: 'total', 'conductor', 'origen', 'destino'.")
+        pdf_data = generar_pdf(viaje)
+        st.download_button(
+            label="📥 Descargar Reporte PDF",
+            data=pdf_data,
+            file_name=f"Uber_Reporte_{viaje.get('fecha_texto', 'viaje')}.pdf",
+            mime="application/pdf"
+        )
