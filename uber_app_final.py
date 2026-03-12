@@ -84,20 +84,45 @@ if archivo is not None:
         m3.metric("Servicio", viaje_seleccionado.get('servicio', 'UberX'))
 
     # 3. Generación de Reporte
-    st.divider()
-    if st.button("✨ Generar Reporte PDF Individual"):
-        try:
-            pdf_bytes = generar_pdf(viaje_seleccionado)
-            nombre_archivo = f"Reporte_Uber_{viaje_seleccionado.get('fecha_texto', 'viaje')}.pdf"
-            
-            st.download_button(
-                label="📥 Descargar Reporte PDF",
-                data=pdf_bytes,
-                file_name=nombre_archivo,
-                mime="application/pdf"
-            )
-            st.success("¡El reporte está listo para descargar!")
-        except Exception as e:
-            st.error(f"Error al generar el PDF: {e}")
-else:
-    st.info("👋 Bienvenido. Por favor sube tu archivo CSV para comenzar a generar reportes.")
+   def generar_pdf(row):
+    pdf = UberPDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 12)
+    
+    # Datos del encabezado [cite: 1, 2]
+    pdf.cell(0, 10, f"Gracias por elegir Uber, {row.get('usuario', 'Mario')}", ln=True) [cite: 1]
+    pdf.set_text_color(128, 128, 128)
+    pdf.cell(0, 10, f"{row.get('fecha_texto', '16 de enero de 2026')}", ln=True) [cite: 2]
+    pdf.ln(10)
+    
+    # Bloque de Total [cite: 4, 5]
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font('Arial', 'B', 24)
+    pdf.cell(100, 15, "Total", 0, 0) [cite: 4]
+    pdf.cell(0, 15, f"{row.get('total', '22.40')} US$", 0, 1, 'R') [cite: 5]
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    
+    # Desglose Financiero [cite: 6, 8, 10]
+    pdf.ln(5)
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(100, 10, "Tarifa del viaje", 0, 0) [cite: 6]
+    pdf.cell(0, 10, f"{row.get('tarifa', '22.37')} US$", 0, 1, 'R') [cite: 9]
+    pdf.cell(100, 10, "Tiempo de espera", 0, 0) [cite: 8]
+    pdf.cell(0, 10, f"{row.get('espera', '0.03')} US$", 0, 1, 'R') [cite: 10]
+    
+    # Detalles del Servicio [cite: 17, 18]
+    pdf.ln(10)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(0, 10, f"Viajaste con {row.get('conductor', 'VICTOR DAVID')}", ln=True) [cite: 17]
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 10, f"{row.get('servicio', 'UberX')} | {row.get('distancia', '53.1 kilómetros')} | {row.get('duracion', '1 hora 5 min')}", ln=True) [cite: 18]
+    
+    # Ruta 
+    pdf.ln(5)
+    pdf.set_font('Arial', 'I', 9)
+    pdf.multi_cell(0, 5, f"Inicio: {row.get('hora_inicio', '09:44')} | {row.get('origen', 'Guayaquil')}") [cite: 19]
+    pdf.ln(2)
+    pdf.multi_cell(0, 5, f"Fin: {row.get('hora_fin', '10:49')} | {row.get('destino', 'Virgen de Fátima')}") [cite: 20]
+    
+    # RETORNO CORREGIDO: fpdf2 devuelve bytes automáticamente
+    return pdf.output()
