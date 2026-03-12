@@ -1,0 +1,3 @@
+Plaintext
+pandas
+fpdf2
